@@ -3,9 +3,8 @@ package com.upc.safesignal.Security.config;
 import com.upc.safesignal.Security.filters.JwtRequestFilter;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.config.Customizer;
 import org.springframework.context.annotation.*;
-import org.springframework.core.Ordered;
-import org.springframework.core.annotation.Order;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.*;
 import org.springframework.security.config.annotation.method.configuration.*;
@@ -18,7 +17,6 @@ import org.springframework.security.crypto.password.*;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.*;
-import org.springframework.web.filter.CorsFilter;
 
 @Configuration
 @EnableWebSecurity
@@ -45,6 +43,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable) // API REST: no hace falta CSRF
+                .cors(Customizer.withDefaults()) // usa el bean CorsConfigurationSource (corre ANTES de la autorización)
                 .authorizeHttpRequests(auth -> auth
                         // publicos: login, crear cuenta, recuperar contraseña y Swagger
                         .requestMatchers(
@@ -76,10 +75,9 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // CORS para el frontend
+    // CORS para el frontend (lo usa http.cors(...) para que el preflight OPTIONS no sea rechazado con 401)
     @Bean
-    @Order(Ordered.HIGHEST_PRECEDENCE)
-    public CorsFilter corsFilter(@Value("${ip.frontend}") String frontendUrl) {
+    public CorsConfigurationSource corsConfigurationSource(@Value("${ip.frontend}") String frontendUrl) {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true);
         config.addAllowedOrigin(frontendUrl);
@@ -89,6 +87,6 @@ public class SecurityConfig {
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
-        return new CorsFilter(source);
+        return source;
     }
 }
