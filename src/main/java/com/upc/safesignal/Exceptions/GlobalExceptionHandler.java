@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
 import org.springframework.security.access.*;
 import org.springframework.security.authentication.*;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -49,6 +50,12 @@ public class GlobalExceptionHandler {
                 .map(e -> e.getField() + ": " + e.getDefaultMessage())
                 .collect(Collectors.joining(", "));
         return ResponseEntity.badRequest().body(new ErrorResponse("VALIDATION_ERROR", message));
+    }
+
+    // falta un parámetro obligatorio o el JSON enviado es inválido
+    @ExceptionHandler({MissingServletRequestParameterException.class, HttpMessageNotReadableException.class})
+    public ResponseEntity<ErrorResponse> handleBadRequest(Exception ex) {
+        return ResponseEntity.badRequest().body(new ErrorResponse("BAD_REQUEST", "Solicitud inválida: faltan datos o el formato es incorrecto"));
     }
 
     // cualquier otra excepción
