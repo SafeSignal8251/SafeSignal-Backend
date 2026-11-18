@@ -2,6 +2,8 @@ package com.upc.safesignal.Controllers;
 
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
+import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,12 +19,16 @@ public class UsuarioController {
     @Autowired
     private UsuarioService usuarioService;
 
+    @Autowired
+    private ModelMapper modelMapper;
+
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
     public ResponseEntity<List<UsuarioDTO>> listar() {
         return ResponseEntity.ok(usuarioService.listar());
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id)")
     @GetMapping("/{id}")
     public ResponseEntity<UsuarioDTO> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.obtenerPorId(id));
@@ -47,15 +53,15 @@ public class UsuarioController {
 
     // HU-01: crear cuenta
     @PostMapping("/registrar")
-    public ResponseEntity<UsuarioDTO> registrar(@RequestBody UsuarioDTO usuarioDTO) {
-        return ResponseEntity.ok(usuarioService.registrar(usuarioDTO));
+    public ResponseEntity<UsuarioDTO> registrar(@Valid @RequestBody RegistroUsuarioDTO registro) {
+        return ResponseEntity.ok(usuarioService.registrar(modelMapper.map(registro, UsuarioDTO.class)));
     }
 
     // HU-01: solo un administrador crea otros administradores
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/registrar-admin")
-    public ResponseEntity<UsuarioDTO> registrarAdmin(@RequestBody UsuarioDTO usuarioDTO) {
-        return ResponseEntity.ok(usuarioService.registrarAdmin(usuarioDTO));
+    public ResponseEntity<UsuarioDTO> registrarAdmin(@Valid @RequestBody RegistroUsuarioDTO registro) {
+        return ResponseEntity.ok(usuarioService.registrarAdmin(modelMapper.map(registro, UsuarioDTO.class)));
     }
 
     // HU-02: iniciar sesión (body: correo, contrasena y, opcionales, dni y rol)
@@ -89,18 +95,21 @@ public class UsuarioController {
     }
 
     // HU-04: editar perfil
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id)")
     @PutMapping("/{id}")
     public ResponseEntity<UsuarioDTO> actualizar(@PathVariable Long id, @RequestBody UsuarioDTO usuarioDTO) {
         return ResponseEntity.ok(usuarioService.actualizar(id, usuarioDTO));
     }
 
     // HU-49: personalizar mensaje predeterminado de alerta SOS
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id)")
     @PutMapping("/{id}/mensaje-sos")
     public ResponseEntity<UsuarioDTO> actualizarMensajeSos(@PathVariable Long id, @RequestParam String mensaje) {
         return ResponseEntity.ok(usuarioService.actualizarMensajeSos(id, mensaje));
     }
 
     // HU-47: accesos rápidos de la pantalla principal
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id)")
     @GetMapping("/{id}/accesos-rapidos")
     public ResponseEntity<Map<String, Object>> accesosRapidos(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.accesosRapidos(id));
@@ -121,6 +130,7 @@ public class UsuarioController {
     }
 
     // HU-07: eliminar cuenta
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id)")
     @DeleteMapping("/{id}")
     public void eliminar(@PathVariable Long id) {
         usuarioService.eliminar(id);
