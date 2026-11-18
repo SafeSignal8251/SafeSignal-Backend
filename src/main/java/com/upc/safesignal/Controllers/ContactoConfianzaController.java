@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ public class ContactoConfianzaController {
     }
 
     // HU-06: registrar contacto de confianza
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<ContactoConfianzaDTO> registrar(
             @RequestParam Long id_usuario,
@@ -45,6 +48,7 @@ public class ContactoConfianzaController {
         contactoService.eliminar(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<ContactoConfianzaDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(contactoService.listarPorUsuario(id_usuario));
