@@ -1,4 +1,4 @@
-SafeSignal – Frontend
+SafeSignal – Backend
 
 SafeSignal es una plataforma web de seguridad ciudadana que permite reportar incidentes, visualizar zonas de riesgo en un mapa, gestionar contactos de confianza y dispositivos IoT, activar alertas SOS y consultar estadísticas. Incluye un panel para administradores.
 
