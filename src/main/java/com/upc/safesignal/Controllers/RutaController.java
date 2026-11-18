@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +29,7 @@ public class RutaController {
     }
 
     // HU-21: guardar ruta frecuente
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<RutaDTO> registrar(@RequestParam Long id_usuario, @RequestBody RutaDTO rutaDTO) {
         return ResponseEntity.ok(rutaService.registrar(id_usuario, rutaDTO));
@@ -42,6 +45,7 @@ public class RutaController {
         rutaService.eliminar(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<RutaDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(rutaService.listarPorUsuario(id_usuario));
@@ -54,6 +58,7 @@ public class RutaController {
     }
 
     // HU-17: rutas seguras del usuario
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}/seguras")
     public ResponseEntity<List<RutaDTO>> listarSeguras(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(rutaService.listarSeguras(id_usuario));

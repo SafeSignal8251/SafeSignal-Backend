@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ public class SeguimientoController {
     }
 
     // HU-10 / HU-27: iniciar seguimiento (body: destino y tiempo_monitoreo)
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<SeguimientoDTO> iniciar(
             @RequestParam Long id_usuario,
@@ -34,6 +37,7 @@ public class SeguimientoController {
     }
 
     // HU-23: seguimiento automático al salir de una zona segura
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping("/automatico")
     public ResponseEntity<SeguimientoDTO> iniciarAutomatico(
             @RequestParam Long id_usuario,
@@ -52,11 +56,13 @@ public class SeguimientoController {
         seguimientoService.eliminar(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<SeguimientoDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(seguimientoService.listarPorUsuario(id_usuario));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}/activos")
     public ResponseEntity<List<SeguimientoDTO>> listarActivosPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(seguimientoService.listarActivosPorUsuario(id_usuario));
