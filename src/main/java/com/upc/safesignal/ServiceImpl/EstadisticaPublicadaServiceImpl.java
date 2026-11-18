@@ -1,5 +1,7 @@
 package com.upc.safesignal.ServiceImpl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Entities.*;
 import com.upc.safesignal.Repositories.*;
@@ -16,6 +18,7 @@ import java.util.List;
 import java.util.Map;
 
 @Service
+@Transactional
 public class EstadisticaPublicadaServiceImpl implements EstadisticaPublicadaService {
 
     @Autowired
