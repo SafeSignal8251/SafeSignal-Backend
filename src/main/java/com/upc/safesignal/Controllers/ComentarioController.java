@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ public class ComentarioController {
     }
 
     // HU-35: comentar en un reporte comunitario
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<ComentarioDTO> registrar(
             @RequestParam Long id_usuario,
@@ -49,6 +52,7 @@ public class ComentarioController {
         return ResponseEntity.ok(comentarioService.listarPorIncidente(id_incidente));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<ComentarioDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(comentarioService.listarPorUsuario(id_usuario));

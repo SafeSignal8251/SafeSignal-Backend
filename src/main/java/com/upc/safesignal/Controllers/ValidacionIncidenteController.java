@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ public class ValidacionIncidenteController {
     }
 
     // HU-40: tipo_voto = CONFIRMADO o FALSA_ALARMA
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<ValidacionIncidenteDTO> registrar(
             @RequestParam Long id_incidente,
@@ -44,6 +47,7 @@ public class ValidacionIncidenteController {
         return ResponseEntity.ok(validacionService.listarPorIncidente(id_incidente));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<ValidacionIncidenteDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(validacionService.listarPorUsuario(id_usuario));

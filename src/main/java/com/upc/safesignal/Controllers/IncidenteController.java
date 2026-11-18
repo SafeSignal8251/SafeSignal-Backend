@@ -27,6 +27,7 @@ public class IncidenteController {
     }
 
     // HU-16 / HU-22: registrar incidente
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<IncidenteDTO> registrar(
             @RequestParam Long id_zona,
@@ -36,6 +37,7 @@ public class IncidenteController {
     }
 
     // HU-16: reporte de incidente post-emergencia
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping("/post-emergencia")
     public ResponseEntity<IncidenteDTO> registrarPostEmergencia(
             @RequestParam Long id_usuario,
@@ -45,6 +47,7 @@ public class IncidenteController {
     }
 
     // HU-37: editar un reporte propio (body: descripcion)
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PutMapping("/{id}")
     public ResponseEntity<IncidenteDTO> actualizar(
             @PathVariable Long id,
@@ -72,6 +75,7 @@ public class IncidenteController {
         incidenteService.eliminar(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<IncidenteDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(incidenteService.listarPorUsuario(id_usuario));

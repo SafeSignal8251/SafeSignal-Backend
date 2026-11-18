@@ -27,12 +27,14 @@ public class AlertaController {
     }
 
     // HU-08 / HU-09: alerta SOS o silenciosa (body: latitud, longitud y tipo_alerta SOS o SILENCIOSA)
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<AlertaDTO> registrar(@RequestParam Long id_usuario, @RequestBody AlertaDTO alertaDTO) {
         return ResponseEntity.ok(alertaService.registrar(id_usuario, alertaDTO));
     }
 
     // HU-15: alerta automática de un dispositivo IoT
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping("/dispositivo")
     public ResponseEntity<AlertaDTO> registrarConDispositivo(
             @RequestParam Long id_usuario,
@@ -66,11 +68,13 @@ public class AlertaController {
     }
 
     // HU-12: historial de alertas
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<AlertaDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(alertaService.listarPorUsuario(id_usuario));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}/estado/{estado}")
     public ResponseEntity<List<AlertaDTO>> listarPorUsuarioYEstado(
             @PathVariable Long id_usuario,
