@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +28,7 @@ public class DispositivoIoTController {
     }
 
     // HU-31: vincular dispositivo
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<DispositivoIoTDTO> registrar(
             @RequestParam Long id_usuario,
@@ -56,6 +59,7 @@ public class DispositivoIoTController {
     }
 
     // HU-32: sincronización rápida de todos los dispositivos del usuario
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PutMapping("/usuario/{id_usuario}/sincronizar")
     public ResponseEntity<List<DispositivoIoTDTO>> sincronizarTodos(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(dispositivoService.sincronizarTodos(id_usuario));
@@ -68,6 +72,7 @@ public class DispositivoIoTController {
     }
 
     // HU-33: dispositivos del usuario
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<DispositivoIoTDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(dispositivoService.listarPorUsuario(id_usuario));
