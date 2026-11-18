@@ -1,5 +1,7 @@
 package com.upc.safesignal.ServiceImpl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Entities.*;
 import com.upc.safesignal.Repositories.*;
@@ -10,6 +12,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,7 +23,11 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@Transactional
 public class UsuarioServiceImpl implements UsuarioService {
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -210,7 +219,34 @@ public class UsuarioServiceImpl implements UsuarioService {
     // HU-07: eliminar cuenta
     @Override
     public void eliminar(Long id) {
-        log.warn("Eliminando usuario con id: {}", id);
+        buscarUsuario(id); // lanza error si no existe
+        log.warn("Eliminando usuario con id: {} y todos sus datos asociados", id);
+        // HU-07: se borran primero los datos que dependen de la cuenta (llaves foráneas) y al final el usuario
+        String[] borrados = {
+            "delete from Notificacion n where n.usuario.id_usuario = :id"
+                + " or n.contacto.id_contacto in (select c.id_contacto from ContactoConfianza c where c.usuario.id_usuario = :id)"
+                + " or n.alerta.id_alerta in (select a.id_alerta from Alerta a where a.usuario.id_usuario = :id)",
+            "delete from Ubicacion u where u.seguimiento.id_seguimiento in (select s.id_seguimiento from Seguimiento s where s.usuario.id_usuario = :id)",
+            "delete from Seguimiento s where s.usuario.id_usuario = :id",
+            "delete from Comentario c where c.usuario.id_usuario = :id"
+                + " or c.incidente.id_incidente in (select i.id_incidente from Incidente i where i.usuario.id_usuario = :id)",
+            "delete from ValidacionIncidente v where v.usuario.id_usuario = :id"
+                + " or v.incidente.id_incidente in (select i.id_incidente from Incidente i where i.usuario.id_usuario = :id)",
+            "delete from Incidente i where i.usuario.id_usuario = :id",
+            "delete from LecturaSensor l where l.dispositivo.id_dispositivo in (select d.id_dispositivo from DispositivoIoT d where d.usuario.id_usuario = :id)",
+            "delete from Alerta a where a.usuario.id_usuario = :id",
+            "delete from DispositivoIoT d where d.usuario.id_usuario = :id",
+            "delete from ContactoConfianza c where c.usuario.id_usuario = :id",
+            "delete from Ruta r where r.usuario.id_usuario = :id",
+            "delete from FiltroGuardado f where f.usuario.id_usuario = :id",
+            "delete from SuscripcionZona z where z.usuario.id_usuario = :id",
+            "delete from EstadisticaPublicada e where e.usuario.id_usuario = :id"
+        };
+        em.flush();
+        for (String jpql : borrados) {
+            em.createQuery(jpql).setParameter("id", id).executeUpdate();
+        }
+        em.clear();
         usuarioRepository.delete(buscarUsuario(id));
     }
 
