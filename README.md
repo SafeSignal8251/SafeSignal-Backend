@@ -1,34 +1,34 @@
 SafeSignal – Backend
 
-SafeSignal es una plataforma web de seguridad ciudadana que permite reportar incidentes, visualizar zonas de riesgo en un mapa, gestionar contactos de confianza y dispositivos IoT, activar alertas SOS y consultar estadísticas. Incluye un panel para administradores.
+API REST de SafeSignal, una plataforma de seguridad ciudadana: reporte de incidentes, zonas de riesgo, alertas SOS, contactos de confianza, dispositivos IoT y estadísticas.
 
-Este repositorio contiene el frontend en Angular. El backend (Spring Boot) está en SafeSignal-Backend.
+El frontend (Angular) está en SafeSignal-Frontend.
 
 Tecnologías:
-* Angular 22 y TypeScript
-* Angular Material (interfaz) y formularios reactivos
-* Leaflet (mapas)
-* Guards de ruta e interceptor HTTP para el token JWT
-* Vitest (pruebas)
+* Java 21 y Spring Boot
+* Spring Data JPA y PostgreSQL
+* Spring Security con JWT y contraseñas con BCrypt
+* Bean Validation y manejo global de errores
+* Documentación OpenAPI con Swagger (springdoc)
 
-Requisitos:
-* Node.js 22 o superior y npm
-* El backend en ejecución (por defecto en http://localhost:8080)
-* La aplicación queda en http://localhost:4200.
+Seguridad:
+* Autenticación sin estado con JWT.
+* Control de acceso por rol (CLIENTE y ADMIN) con @PreAuthorize.
+* Prevención de IDOR con el bean @seguridad: cada usuario solo accede a sus propios recursos.
+* CORS configurado para el origen del frontend.
+* Las contraseñas nunca se devuelven en las respuestas.
+  
+Configuración:
+Los valores de conexión están en src/main/resources/application.properties. El secreto del JWT se puede cambiar con la variable de entorno JWT_SECRET.
 
-La URL del backend se configura en src/environments/environment.ts (desarrollo) y src/environments/environment.prod.ts (producción), en la propiedad apiURL.
+La API queda en http://localhost:8080 y la documentación en http://localhost:8080/swagger-ui/index.html.
 
 Estructura
-src/app/
-  componentes/
-    publico/      inicio, login, registro, recuperar contraseña, términos
-    cliente/      dashboard, mapa de riesgo, reportes, contactos, dispositivos, notificaciones, perfil
-    admin/        dashboard, usuarios, moderación, umbrales de riesgo, estadísticas, comunicación
-    compartido/   diálogos, menús de navegación y mapa
-  core/           guard de autenticación, interceptor, mensajes y utilidades
-  model/          interfaces de datos
-  services/       servicios HTTP hacia la API
-
-Roles
-* CLIENTE: usuario que reporta incidentes, usa el mapa y las alertas.
-* ADMIN: gestiona usuarios, modera reportes y administra umbrales y estadísticas.
+src/main/java/com/upc/safesignal/
+  Entities/       entidades JPA
+  Repositories/   repositorios
+  Dtos/           objetos de transferencia de datos
+  Services/       interfaces de servicio
+  ServiceImpl/    implementaciones de la lógica de negocio
+  Controllers/    endpoints REST
+  Security/       JWT, filtros y configuración de seguridad
