@@ -1,5 +1,7 @@
 package com.upc.safesignal.ServiceImpl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Entities.*;
 import com.upc.safesignal.Repositories.*;
@@ -8,12 +10,19 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Transactional
 public class DispositivoIoTServiceImpl implements DispositivoIoTService {
+
+    @PersistenceContext
+    private EntityManager em;
 
     @Autowired
     private DispositivoIoTRepository dispositivoRepository;
@@ -116,6 +125,12 @@ public class DispositivoIoTServiceImpl implements DispositivoIoTService {
     // HU-28: desvincular
     @Override
     public void eliminar(Long id) {
+        DispositivoIoT dispositivo = buscarDispositivo(id);
+        // HU-28: al desvincular se borran sus lecturas y las alertas pasadas se conservan sin dispositivo
+        em.flush();
+        em.createQuery("delete from LecturaSensor l where l.dispositivo.id_dispositivo = :id").setParameter("id", id).executeUpdate();
+        em.createQuery("update Alerta a set a.dispositivo = null where a.dispositivo.id_dispositivo = :id").setParameter("id", id).executeUpdate();
+        em.clear();
         dispositivoRepository.delete(buscarDispositivo(id));
     }
 
