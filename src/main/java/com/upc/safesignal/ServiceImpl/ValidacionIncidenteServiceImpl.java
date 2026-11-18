@@ -1,5 +1,7 @@
 package com.upc.safesignal.ServiceImpl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Entities.*;
 import com.upc.safesignal.Repositories.*;
@@ -13,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Service
+@Transactional
 public class ValidacionIncidenteServiceImpl implements ValidacionIncidenteService {
 
     @Autowired
