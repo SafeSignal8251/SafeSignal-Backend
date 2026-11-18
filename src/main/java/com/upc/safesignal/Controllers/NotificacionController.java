@@ -58,6 +58,7 @@ public class NotificacionController {
     }
 
     // HU-13: bandeja de notificaciones del usuario
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<NotificacionDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(notificacionService.listarPorUsuario(id_usuario));
