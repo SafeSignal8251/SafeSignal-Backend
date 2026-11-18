@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +18,7 @@ public class FiltroGuardadoController {
     private FiltroGuardadoService filtroService;
 
     // HU-42 / HU-44: guardar filtro (body: nombre, distrito, tipologia y rango_dias)
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<FiltroGuardadoDTO> registrar(
             @RequestParam Long id_usuario,
@@ -28,11 +31,13 @@ public class FiltroGuardadoController {
         return ResponseEntity.ok(filtroService.obtenerPorId(id));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<FiltroGuardadoDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(filtroService.listarPorUsuario(id_usuario));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @DeleteMapping("/{id}")
     public void eliminar(@PathVariable Long id, @RequestParam Long id_usuario) {
         filtroService.eliminar(id, id_usuario);
