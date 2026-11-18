@@ -1,5 +1,7 @@
 package com.upc.safesignal.ServiceImpl;
 
+import org.springframework.transaction.annotation.Transactional;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Entities.*;
 import com.upc.safesignal.Repositories.*;
@@ -15,6 +17,7 @@ import java.util.List;
 
 @Slf4j
 @Service
+@Transactional
 public class LecturaSensorServiceImpl implements LecturaSensorService {
 
     @Autowired
