@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +30,7 @@ public class SuscripcionZonaController {
     // HU-36: suscribirse a una zona
     // body (todo opcional): etiqueta, latitud, longitud, radio_metros, categorias,
     // notificar_push, notificar_whatsapp_sms, notificar_correo, hora_desde, hora_hasta
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<SuscripcionZonaDTO> registrar(
             @RequestParam Long id_usuario,
@@ -48,6 +51,7 @@ public class SuscripcionZonaController {
         suscripcionService.eliminar(id);
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<SuscripcionZonaDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(suscripcionService.listarPorUsuario(id_usuario));
@@ -58,6 +62,7 @@ public class SuscripcionZonaController {
         return ResponseEntity.ok(suscripcionService.listarPorZona(id_zona));
     }
 
+    @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}/zona/{id_zona}")
     public ResponseEntity<List<SuscripcionZonaDTO>> listarPorUsuarioYZona(
             @PathVariable Long id_usuario,
