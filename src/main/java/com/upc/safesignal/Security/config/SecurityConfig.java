@@ -49,6 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/api/authenticate",
                                 "/api/usuarios/registrar",
+                                "/api/usuarios/registrar-institucional",
                                 "/api/usuarios/login",
                                 "/api/usuarios/recuperar-password",
                                 "/api/usuarios/restablecer-password",
