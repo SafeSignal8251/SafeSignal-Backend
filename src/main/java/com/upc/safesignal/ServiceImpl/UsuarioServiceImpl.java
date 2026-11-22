@@ -288,7 +288,7 @@ public class UsuarioServiceImpl implements UsuarioService {
     private Usuario buscarPorCorreoYDni(String correo, String dni) {
         List<Usuario> encontrados = usuarioRepository.findByCorreoAndDni(correo, dni);
         if (encontrados.isEmpty()) {
-            throw new RuntimeException("No existe una cuenta con esos datos");
+            throw new RuntimeException("No existe una cuenta de SafeSignal asociada al correo y DNI introducidos");
         }
         return encontrados.get(0);
     }
