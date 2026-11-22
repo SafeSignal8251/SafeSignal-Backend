@@ -153,6 +153,10 @@ public class AlertaServiceImpl implements AlertaService {
 
         String mensaje = "ALERTA " + guardada.getTipo_alerta() + " de "
                 + usuario.getNombres() + " " + usuario.getApellidos();
+        // HU-49: si el cliente personalizó su mensaje SOS, es el que reciben sus contactos
+        if (usuario.getMensaje_sos() != null && !usuario.getMensaje_sos().isBlank()) {
+            mensaje = mensaje + ". " + usuario.getMensaje_sos().trim();
+        }
         List<ContactoConfianza> contactos = contactoRepository.findByUsuarioOrderByPrioridadAsc(usuario);
         for (ContactoConfianza contacto : contactos) {
             notificacionService.crearParaContacto(guardada, contacto, mensaje);

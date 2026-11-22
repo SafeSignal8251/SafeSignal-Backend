@@ -5,10 +5,13 @@ import com.upc.safesignal.Services.*;
 import jakarta.validation.Valid;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +24,10 @@ public class UsuarioController {
 
     @Autowired
     private ModelMapper modelMapper;
+
+    // Código que entrega la institución para poder crear cuentas de administrador (ver application.properties)
+    @Value("${safesignal.admin.codigo-registro:}")
+    private String codigoRegistroAdmin;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
@@ -55,6 +62,27 @@ public class UsuarioController {
     @PostMapping("/registrar")
     public ResponseEntity<UsuarioDTO> registrar(@Valid @RequestBody RegistroUsuarioDTO registro) {
         return ResponseEntity.ok(usuarioService.registrar(modelMapper.map(registro, UsuarioDTO.class)));
+    }
+
+    // HU-01 (escenario 2): cuenta de administrador desde la pantalla de registro. El código de placa / Id operativo
+    // es el identificador de inicio de sesión (el campo DNI del login) y el código de autorización lo entrega la institución.
+    @PostMapping("/registrar-institucional")
+    public ResponseEntity<?> registrarInstitucional(@Valid @RequestBody RegistroAdminDTO registro) {
+        if (codigoRegistroAdmin == null || codigoRegistroAdmin.isBlank()
+                || !MessageDigest.isEqual(codigoRegistroAdmin.getBytes(StandardCharsets.UTF_8),
+                        registro.getCodigo_autorizacion().getBytes(StandardCharsets.UTF_8))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("code", "CODIGO_INVALIDO", "message", "El código de autorización institucional no es válido"));
+        }
+        UsuarioDTO dto = new UsuarioDTO();
+        dto.setNombres(registro.getNombres());
+        dto.setApellidos(registro.getApellidos());
+        dto.setCorreo(registro.getCorreo());
+        dto.setDni(registro.getCodigo_placa());
+        dto.setTelefono(registro.getTelefono());
+        dto.setDistrito(registro.getEntidad());
+        dto.setContrasena(registro.getContrasena());
+        return ResponseEntity.ok(usuarioService.registrarAdmin(dto));
     }
 
     // HU-01: solo un administrador crea otros administradores
