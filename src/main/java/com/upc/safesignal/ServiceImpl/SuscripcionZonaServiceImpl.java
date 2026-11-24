@@ -28,6 +28,9 @@ public class SuscripcionZonaServiceImpl implements SuscripcionZonaService {
     private ZonaRiesgoRepository zonaRepository;
 
     @Autowired
+    private ZonaResolver zonaResolver;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @Override
@@ -44,7 +47,16 @@ public class SuscripcionZonaServiceImpl implements SuscripcionZonaService {
     @Override
     public SuscripcionZonaDTO registrar(Long id_usuario, Long id_zona, SuscripcionZonaDTO datos) {
         Usuario usuario = buscarUsuario(id_usuario);
-        ZonaRiesgo zona = buscarZona(id_zona);
+        ZonaRiesgo zona;
+        if (id_zona != null) {
+            zona = buscarZona(id_zona);
+        } else {
+            if (datos.getLatitud() == null || datos.getLongitud() == null) {
+                throw new RuntimeException("Indica el punto central de la zona");
+            }
+            // Sin zona indicada: se usa la más cercana o, si no hay ninguna, se crea una con la etiqueta
+            zona = zonaResolver.masCercanaOCrear(datos.getLatitud(), datos.getLongitud(), datos.getEtiqueta(), null);
+        }
 
         if (!suscripcionRepository.findByUsuarioAndZona(usuario, zona).isEmpty()) {
             throw new RuntimeException("Ya estás suscrito a esta zona");
