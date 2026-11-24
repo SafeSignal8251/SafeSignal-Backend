@@ -35,6 +35,8 @@ class IncidenteServiceImplTest {
     private AlertaRepository alertaRepository;
     @Mock
     private NotificacionService notificacionService;
+    @Mock
+    private ValidacionIncidenteRepository validacionRepository;
 
     @InjectMocks
     private IncidenteServiceImpl incidenteService;
@@ -129,6 +131,56 @@ class IncidenteServiceImplTest {
         when(incidenteRepository.save(any(Incidente.class))).thenAnswer(inv -> inv.getArgument(0));
 
         assertEquals("VERIFICADO", incidenteService.moderar(3L, false).getEstado());
+    }
+
+    private Incidente reportePropio(String estado) {
+        Incidente i = new Incidente();
+        i.setId_incidente(7L);
+        i.setUsuario(usuario);
+        i.setEstado(estado);
+        i.setDescripcion("original");
+        return i;
+    }
+
+    @Test
+    void editar_reportePendienteSinValidar_cambiaLaDescripcion() {
+        Incidente i = reportePropio("PENDIENTE");
+        when(incidenteRepository.findById(7L)).thenReturn(Optional.of(i));
+        when(incidenteRepository.save(any(Incidente.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        IncidenteDTO r = incidenteService.actualizarDescripcion(7L, 1L, "nueva descripcion");
+
+        assertEquals("nueva descripcion", r.getDescripcion());
+        assertFalse(r.getValidado());
+    }
+
+    @Test
+    void editar_reporteConVotoDeConfirmacion_lanzaError() {
+        Incidente i = reportePropio("PENDIENTE");
+        when(incidenteRepository.findById(7L)).thenReturn(Optional.of(i));
+        when(validacionRepository.contarVotos(i, "CONFIRMADO")).thenReturn(1L);
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> incidenteService.actualizarDescripcion(7L, 1L, "nueva"));
+
+        assertTrue(ex.getMessage().contains("validado"));
+        assertEquals("original", i.getDescripcion());
+        verify(incidenteRepository, never()).save(any());
+    }
+
+    @Test
+    void editar_reporteVerificadoPorElAdmin_lanzaError() {
+        when(incidenteRepository.findById(7L)).thenReturn(Optional.of(reportePropio("VERIFICADO")));
+
+        assertThrows(RuntimeException.class, () -> incidenteService.actualizarDescripcion(7L, 1L, "nueva"));
+    }
+
+    @Test
+    void editar_reporteDeOtroUsuario_lanzaError() {
+        when(incidenteRepository.findById(7L)).thenReturn(Optional.of(reportePropio("PENDIENTE")));
+
+        RuntimeException ex = assertThrows(RuntimeException.class, () -> incidenteService.actualizarDescripcion(7L, 99L, "nueva"));
+
+        assertTrue(ex.getMessage().contains("propios"));
     }
 
     @Test
