@@ -34,7 +34,7 @@ public class SuscripcionZonaController {
     @PostMapping
     public ResponseEntity<SuscripcionZonaDTO> registrar(
             @RequestParam Long id_usuario,
-            @RequestParam Long id_zona,
+            @RequestParam(required = false) Long id_zona,
             @RequestBody SuscripcionZonaDTO suscripcionDTO) {
         return ResponseEntity.ok(suscripcionService.registrar(id_usuario, id_zona, suscripcionDTO));
     }

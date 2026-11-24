@@ -41,6 +41,9 @@ public class IncidenteServiceImpl implements IncidenteService {
     private NotificacionService notificacionService;
 
     @Autowired
+    private ZonaResolver zonaResolver;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @Override
@@ -58,14 +61,21 @@ public class IncidenteServiceImpl implements IncidenteService {
     public IncidenteDTO registrar(Long id_usuario, Long id_zona, IncidenteDTO incidenteDTO) {
         Usuario usuario = usuarioRepository.findById(id_usuario)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
-        ZonaRiesgo zona = zonaRepository.findById(id_zona)
-                .orElseThrow(() -> new RuntimeException("Zona de riesgo no encontrada"));
+        ZonaRiesgo zona = null;
+        if (id_zona != null) {
+            zona = zonaRepository.findById(id_zona)
+                    .orElseThrow(() -> new RuntimeException("Zona de riesgo no encontrada"));
+        }
 
         if (incidenteDTO.getTipo_incidente() == null || incidenteDTO.getTipo_incidente().isBlank()) {
             throw new RuntimeException("El tipo de incidente es obligatorio");
         }
         if (incidenteDTO.getLatitud() == null || incidenteDTO.getLongitud() == null) {
             throw new RuntimeException("La ubicación del incidente es obligatoria");
+        }
+        if (zona == null) {
+            // Sin zona indicada: se usa la más cercana o, si no hay ninguna, se crea una a partir del reporte
+            zona = zonaResolver.masCercanaOCrear(incidenteDTO.getLatitud(), incidenteDTO.getLongitud(), incidenteDTO.getDistrito(), incidenteDTO.getNivel_riesgo());
         }
 
         Incidente incidente = modelMapper.map(incidenteDTO, Incidente.class);
@@ -157,6 +167,10 @@ public class IncidenteServiceImpl implements IncidenteService {
         if (!incidente.getUsuario().getId_usuario().equals(id_usuario)) {
             throw new RuntimeException("Solo puedes editar tus propios reportes");
         }
+        // Un reporte validado por la comunidad, verificado o descartado por el administrador ya no se puede editar
+        if (!"PENDIENTE".equals(incidente.getEstado()) || estaValidado(incidente)) {
+            throw new RuntimeException("Este reporte ya fue validado y no se puede editar");
+        }
         incidente.setDescripcion(descripcion);
         return aDTO(incidenteRepository.save(incidente));
     }
@@ -231,9 +245,16 @@ public class IncidenteServiceImpl implements IncidenteService {
                 || filtro.equalsIgnoreCase(valor);
     }
 
+    // validado = verificado por el administrador o con al menos un voto de confirmación de la comunidad
+    private boolean estaValidado(Incidente incidente) {
+        return "VERIFICADO".equals(incidente.getEstado())
+                || validacionRepository.contarVotos(incidente, "CONFIRMADO") > 0;
+    }
+
     // entidad -> DTO (los ids de las relaciones se copian a mano)
     private IncidenteDTO aDTO(Incidente incidente) {
         IncidenteDTO dto = modelMapper.map(incidente, IncidenteDTO.class);
+        dto.setValidado(estaValidado(incidente));
         if (incidente.getZona() != null) {
             dto.setId_zona(incidente.getZona().getId_zona());
         }

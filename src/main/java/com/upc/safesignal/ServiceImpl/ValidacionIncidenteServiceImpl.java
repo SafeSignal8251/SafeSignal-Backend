@@ -5,6 +5,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.upc.safesignal.Dtos.*;
 import com.upc.safesignal.Entities.*;
 import com.upc.safesignal.Repositories.*;
+import com.upc.safesignal.Services.NotificacionService;
 import com.upc.safesignal.Services.ValidacionIncidenteService;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,9 @@ public class ValidacionIncidenteServiceImpl implements ValidacionIncidenteServic
 
     @Autowired
     private IncidenteRepository incidenteRepository;
+
+    @Autowired
+    private NotificacionService notificacionService;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -54,6 +58,11 @@ public class ValidacionIncidenteServiceImpl implements ValidacionIncidenteServic
         Usuario usuario = buscarUsuario(id_usuario);
         Incidente incidente = buscarIncidente(id_incidente);
 
+        // El autor no puede validar ni denunciar su propio reporte
+        if (incidente.getUsuario() != null && id_usuario.equals(incidente.getUsuario().getId_usuario())) {
+            throw new RuntimeException("No puedes validar tu propio reporte");
+        }
+
         if (!validacionRepository.findByIncidenteAndUsuario(incidente, usuario).isEmpty()) {
             throw new RuntimeException("Ya registraste tu voto en este reporte");
         }
@@ -63,7 +72,29 @@ public class ValidacionIncidenteServiceImpl implements ValidacionIncidenteServic
         validacion.setIncidente(incidente);
         validacion.setTipo_voto(voto);
         validacion.setFecha(LocalDateTime.now());
-        return aDTO(validacionRepository.save(validacion));
+        ValidacionIncidente guardada = validacionRepository.save(validacion);
+
+        // HU-40: una denuncia de falsa alarma se notifica al autor del reporte y a los administradores
+        if (voto.equals("FALSA_ALARMA")) {
+            notificarDenuncia(incidente);
+        }
+        return aDTO(guardada);
+    }
+
+    private void notificarDenuncia(Incidente incidente) {
+        String codigo = "#REP-" + incidente.getId_incidente();
+        String tipo = incidente.getTipo_incidente() != null ? incidente.getTipo_incidente() : "reporte";
+        if (incidente.getUsuario() != null) {
+            notificacionService.crearParaUsuario(incidente.getUsuario(),
+                    "Un vecino marcó tu reporte " + codigo + " (" + tipo + ") como inconsistente. Un administrador lo revisará.",
+                    "FALSA_ALARMA", "MEDIA");
+        }
+        long denuncias = validacionRepository.contarVotos(incidente, "FALSA_ALARMA");
+        for (Usuario admin : usuarioRepository.findByRol("ADMIN")) {
+            notificacionService.crearParaUsuario(admin,
+                    "El reporte " + codigo + " (" + tipo + ") fue denunciado como falsa alarma. Denuncias acumuladas: " + denuncias + ".",
+                    "FALSA_ALARMA", "MEDIA");
+        }
     }
 
     @Override
