@@ -21,4 +21,6 @@ public class IncidenteDTO {
     private String distrito;
     private Long id_zona;
     private Long id_usuario;
+    // true si el reporte ya fue validado por la comunidad o verificado por el administrador (ya no se puede editar)
+    private Boolean validado;
 }
