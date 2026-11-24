@@ -5,9 +5,11 @@ import com.upc.safesignal.Services.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/incidentes")
@@ -16,21 +18,37 @@ public class IncidenteController {
     @Autowired
     private IncidenteService incidenteService;
 
+    // HU-46 / HU-39: un reporte ELIMINADO por el administrador deja de ser visible para los clientes
+    private boolean esAdmin(Authentication auth) {
+        return auth != null && auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    }
+
+    private List<IncidenteDTO> visibles(List<IncidenteDTO> lista, Authentication auth) {
+        if (esAdmin(auth)) {
+            return lista;
+        }
+        return lista.stream().filter(i -> !"ELIMINADO".equals(i.getEstado())).collect(Collectors.toList());
+    }
+
     @GetMapping
-    public ResponseEntity<List<IncidenteDTO>> listar() {
-        return ResponseEntity.ok(incidenteService.listar());
+    public ResponseEntity<List<IncidenteDTO>> listar(Authentication auth) {
+        return ResponseEntity.ok(visibles(incidenteService.listar(), auth));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<IncidenteDTO> obtener(@PathVariable Long id) {
-        return ResponseEntity.ok(incidenteService.obtenerPorId(id));
+    public ResponseEntity<IncidenteDTO> obtener(@PathVariable Long id, Authentication auth) {
+        IncidenteDTO dto = incidenteService.obtenerPorId(id);
+        if (!esAdmin(auth) && "ELIMINADO".equals(dto.getEstado())) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(dto);
     }
 
     // HU-16 / HU-22: registrar incidente
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @PostMapping
     public ResponseEntity<IncidenteDTO> registrar(
-            @RequestParam Long id_zona,
+            @RequestParam(required = false) Long id_zona,
             @RequestParam Long id_usuario,
             @RequestBody IncidenteDTO incidenteDTO) {
         return ResponseEntity.ok(incidenteService.registrar(id_usuario, id_zona, incidenteDTO));
@@ -77,18 +95,18 @@ public class IncidenteController {
 
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
     @GetMapping("/usuario/{id_usuario}")
-    public ResponseEntity<List<IncidenteDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
-        return ResponseEntity.ok(incidenteService.listarPorUsuario(id_usuario));
+    public ResponseEntity<List<IncidenteDTO>> listarPorUsuario(@PathVariable Long id_usuario, Authentication auth) {
+        return ResponseEntity.ok(visibles(incidenteService.listarPorUsuario(id_usuario), auth));
     }
 
     @GetMapping("/zona/{id_zona}")
-    public ResponseEntity<List<IncidenteDTO>> listarPorZona(@PathVariable Long id_zona) {
-        return ResponseEntity.ok(incidenteService.listarPorZona(id_zona));
+    public ResponseEntity<List<IncidenteDTO>> listarPorZona(@PathVariable Long id_zona, Authentication auth) {
+        return ResponseEntity.ok(visibles(incidenteService.listarPorZona(id_zona), auth));
     }
 
     @GetMapping("/estado/{estado}")
-    public ResponseEntity<List<IncidenteDTO>> listarPorEstado(@PathVariable String estado) {
-        return ResponseEntity.ok(incidenteService.listarPorEstado(estado));
+    public ResponseEntity<List<IncidenteDTO>> listarPorEstado(@PathVariable String estado, Authentication auth) {
+        return ResponseEntity.ok(visibles(incidenteService.listarPorEstado(estado), auth));
     }
 
     // HU-46: reportes denunciados como falsa alarma
@@ -103,8 +121,9 @@ public class IncidenteController {
     public ResponseEntity<List<IncidenteDTO>> listarCercanos(
             @RequestParam double lat,
             @RequestParam double lng,
-            @RequestParam double radio) {
-        return ResponseEntity.ok(incidenteService.listarCercanos(lat, lng, radio));
+            @RequestParam double radio,
+            Authentication auth) {
+        return ResponseEntity.ok(visibles(incidenteService.listarCercanos(lat, lng, radio), auth));
     }
 
     // HU-38: incidentes filtrados para las estadísticas (todos los filtros son opcionales)
