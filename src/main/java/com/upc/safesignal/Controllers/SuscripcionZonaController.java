@@ -1,5 +1,7 @@
 package com.upc.safesignal.Controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.security.access.prepost.PreAuthorize;
 
 import com.upc.safesignal.Dtos.*;
@@ -10,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Tag(name = "Suscripciones a zonas", description = "Suscripciones del usuario a avisos de zonas de riesgo.")
 @RestController
 @RequestMapping("/api/suscripciones-zona")
 public class SuscripcionZonaController {
@@ -17,11 +20,13 @@ public class SuscripcionZonaController {
     @Autowired
     private SuscripcionZonaService suscripcionService;
 
+    @Operation(summary = "Listar suscripciones a zonas", description = "Devuelve todos los registros de suscripciones a zonas.")
     @GetMapping
     public ResponseEntity<List<SuscripcionZonaDTO>> listar() {
         return ResponseEntity.ok(suscripcionService.listar());
     }
 
+    @Operation(summary = "Obtener suscripción a zona por id", description = "Devuelve el registro de suscripción a zona con el id indicado; responde con error si no existe.")
     @GetMapping("/{id}")
     public ResponseEntity<SuscripcionZonaDTO> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(suscripcionService.obtenerPorId(id));
@@ -31,6 +36,7 @@ public class SuscripcionZonaController {
     // body (todo opcional): etiqueta, latitud, longitud, radio_metros, categorias,
     // notificar_push, notificar_whatsapp_sms, notificar_correo, hora_desde, hora_hasta
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
+    @Operation(summary = "Suscribirse a una zona", description = "Suscribe al usuario a los avisos de la zona. No permite suscribirse dos veces a la misma zona.")
     @PostMapping
     public ResponseEntity<SuscripcionZonaDTO> registrar(
             @RequestParam Long id_usuario,
@@ -39,6 +45,7 @@ public class SuscripcionZonaController {
         return ResponseEntity.ok(suscripcionService.registrar(id_usuario, id_zona, suscripcionDTO));
     }
 
+    @Operation(summary = "Actualizar suscripción a zona", description = "Modifica los datos del registro de suscripción a zona con el id indicado; los campos que no se envían no se modifican.")
     @PutMapping("/{id}")
     public ResponseEntity<SuscripcionZonaDTO> actualizar(
             @PathVariable Long id,
@@ -46,23 +53,27 @@ public class SuscripcionZonaController {
         return ResponseEntity.ok(suscripcionService.actualizar(id, suscripcionDTO));
     }
 
+    @Operation(summary = "Eliminar suscripción a zona", description = "Elimina el registro de suscripción a zona con el id indicado.")
     @DeleteMapping("/{id}")
     public void eliminar(@PathVariable Long id) {
         suscripcionService.eliminar(id);
     }
 
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
+    @Operation(summary = "Listar suscripciones a zonas de un usuario", description = "Devuelve los registros de suscripciones a zonas del usuario indicado.")
     @GetMapping("/usuario/{id_usuario}")
     public ResponseEntity<List<SuscripcionZonaDTO>> listarPorUsuario(@PathVariable Long id_usuario) {
         return ResponseEntity.ok(suscripcionService.listarPorUsuario(id_usuario));
     }
 
+    @Operation(summary = "Listar los suscriptores de una zona", description = "Devuelve las suscripciones a la zona indicada.")
     @GetMapping("/zona/{id_zona}")
     public ResponseEntity<List<SuscripcionZonaDTO>> listarPorZona(@PathVariable Long id_zona) {
         return ResponseEntity.ok(suscripcionService.listarPorZona(id_zona));
     }
 
     @PreAuthorize("hasRole('ADMIN') or @seguridad.esUsuario(#id_usuario)")
+    @Operation(summary = "Consultar la suscripción de un usuario a una zona", description = "Devuelve la suscripción del usuario a esa zona, si existe.")
     @GetMapping("/usuario/{id_usuario}/zona/{id_zona}")
     public ResponseEntity<List<SuscripcionZonaDTO>> listarPorUsuarioYZona(
             @PathVariable Long id_usuario,

@@ -1,5 +1,7 @@
 package com.upc.safesignal.Security.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import com.upc.safesignal.Entities.*;
 import com.upc.safesignal.Repositories.*;
 import com.upc.safesignal.Security.dtos.*;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.*;
 
 @Slf4j
+@Tag(name = "Autenticación", description = "Inicio de sesión con JWT. Obtén el token aquí y pégalo en el botón Authorize.")
 @RestController
 @RequestMapping("/api")
 public class AuthController {
@@ -34,6 +37,7 @@ public class AuthController {
     private UsuarioRepository usuarioRepository;
 
     // HU-02: iniciar sesión (devuelve el token JWT)
+    @Operation(summary = "Iniciar sesión y obtener el token JWT", description = "Recibe correo y contraseña y devuelve el token JWT. El token se envía en el encabezado Authorization (Bearer) de las demás peticiones. Endpoint público.")
     @PostMapping("/authenticate")
     public ResponseEntity<AuthResponseDTO> autenticar(@Valid @RequestBody AuthRequestDTO authRequest) {
         // lanza BadCredentialsException si el correo o la contraseña no coinciden
