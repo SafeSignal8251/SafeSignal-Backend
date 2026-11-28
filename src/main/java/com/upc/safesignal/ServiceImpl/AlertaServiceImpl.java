@@ -81,6 +81,19 @@ public class AlertaServiceImpl implements AlertaService {
             alerta.setTipo_alerta(alerta.getTipo_alerta().toUpperCase());
         }
         alerta.setOrigen("DISPOSITIVO");
+        // La lectura del sensor no trae coordenadas: se usa la última ubicación conocida del usuario
+        if (alerta.getLatitud() == null || alerta.getLongitud() == null) {
+            for (Alerta previa : alertaRepository.historialPorUsuario(usuario)) {
+                if (previa.getLatitud() != null && previa.getLongitud() != null) {
+                    alerta.setLatitud(previa.getLatitud());
+                    alerta.setLongitud(previa.getLongitud());
+                    String lugar = vacio(previa.getDireccion()) ? "" : " · " + previa.getDireccion();
+                    String texto = "Última ubicación conocida" + lugar;
+                    alerta.setDireccion(texto.length() > 150 ? texto.substring(0, 150) : texto);
+                    break;
+                }
+            }
+        }
         return aDTO(crear(usuario, dispositivo, alerta));
     }
 
